@@ -30,9 +30,14 @@ item:
   # Durabilite maximale des grappins crees. 0 = durabilite vanilla d'une canne (64).
   # Ne s'applique qu'aux grappins crees ou mis a jour ensuite avec /grappin set.
   max-durability: 0
-  # false : le grappin ne peut pas etre repare, par aucun moyen - Raccommodage, enclume,
+  # Chaque grappin porte son propre choix, fixe a sa creation :
+  #   /grappin give [joueur] reparable     /grappin give [joueur] irreparable
+  #   /grappin set reparable               /grappin set irreparable
+  # Un grappin irreparable ne peut etre repare par aucun moyen : Raccommodage, enclume,
   # meule, etabli, ni commande /repair d'un autre plugin. Sa durabilite ne peut que baisser.
-  # true : il se repare comme n'importe quelle canne.
+  #
+  # Cette valeur ne sert que par defaut : pour un give ou un set sans option, et pour les
+  # anciens grappins crees avant l'existence de ce choix.
   repairable: false
   # Ligne ajoutee a la description quand le grappin est irreparable. Vide = aucune ligne.
   # Les grappins existants la recoivent avec /grappin set.
@@ -44,13 +49,16 @@ messages:
   nothing-to-grab: "<#b5563f>Rien à agripper <#6b6355>· portée <#e8d5b0><range> blocs"
   uses-left: "<#a89f91>Grappin <#6b6355>· <#e8d5b0><uses> <#a89f91>utilisations restantes"
   no-permission: "<#b5563f>Vous n'avez pas la permission."
-  usage: "<#a89f91>Usage : <#d9a441>/grappin give [joueur] <#6b6355>· <#d9a441>/grappin set <#6b6355>· <#d9a441>/grappin reload"
+  usage: "<#a89f91>Usage : <#d9a441>/grappin give [joueur] [reparable|irreparable] <#6b6355>· <#d9a441>/grappin set [reparable|irreparable] <#6b6355>· <#d9a441>/grappin reload"
   player-only: "<#b5563f>Cette commande est réservée aux joueurs."
   player-not-found: "<#b5563f>Joueur introuvable : <#e8d5b0><player>"
-  given: "<#8fb26a>Grappin donné à <#e8d5b0><player><#a89f91>."
-  received: "<#8fb26a>Vous avez reçu un grappin."
+  given: "<#8fb26a>Grappin <state> <#8fb26a>donné à <#e8d5b0><player><#a89f91>."
+  received: "<#8fb26a>Vous avez reçu un grappin <state><#8fb26a>."
   not-a-rod: "<#b5563f>Tenez une canne à pêche en main principale."
-  converted: "<#8fb26a>Votre canne est désormais un grappin. <#6b6355>Ses enchantements sont conservés."
-  updated: "<#8fb26a>Grappin mis à jour. <#6b6355>Son usure et ses enchantements sont conservés."
+  converted: "<#8fb26a>Votre canne est désormais un grappin <state><#8fb26a>. <#6b6355>Ses enchantements sont conservés."
+  updated: "<#8fb26a>Grappin mis à jour <#6b6355>· <state><#6b6355>. Son usure et ses enchantements sont conservés."
+  # Remplacent <state> dans les messages ci-dessus.
+  state-repairable: "<#8fb26a>réparable"
+  state-unrepairable: "<#b5563f>irréparable"
   reloaded: "<#8fb26a>Configuration rechargée."
   repair-blocked: "<#b5563f>Grappin irréparable <#6b6355>· la réparation a été annulée"

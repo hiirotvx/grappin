@@ -14,7 +14,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 
 /**
- * Ferme une a une les voies de reparation connues, quand item.repairable vaut false.
+ * Ferme une a une les voies de reparation connues, pour les grappins irreparables.
  *
  * Ces blocages rendent l'experience propre : aucun resultat repare n'apparait, aucune
  * experience de Raccommodage n'est gaspillee. Mais ils ne sont pas la garantie : une
@@ -31,7 +31,7 @@ public final class RepairGuard implements Listener {
     }
 
     private boolean blocked(ItemStack item) {
-        return !plugin.settings().repairable() && plugin.items().isGrappin(item);
+        return plugin.items().isGrappin(item) && !plugin.items().isRepairable(item);
     }
 
     /** Raccommodage : l'experience recoltee ne repare pas le grappin et revient au joueur. */

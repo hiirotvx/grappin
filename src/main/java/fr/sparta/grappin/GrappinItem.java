@@ -28,26 +28,40 @@ public final class GrappinItem {
     private final GrappinPlugin plugin;
     // Registre d'usure : la plus forte usure jamais constatee sur ce grappin.
     private final NamespacedKey wearKey;
+    // Choix fait a la creation : 1 = reparable, 0 = irreparable. Absent = valeur de la config.
+    private final NamespacedKey repairableKey;
 
     public GrappinItem(GrappinPlugin plugin) {
         this.plugin = plugin;
         this.wearKey = new NamespacedKey(plugin, "recorded_wear");
+        this.repairableKey = new NamespacedKey(plugin, "repairable");
     }
 
-    public ItemStack create() {
+    /** @param repairable true / false pour imposer le choix, null pour la valeur de la config */
+    public ItemStack create(Boolean repairable) {
         ItemStack rod = new ItemStack(Material.FISHING_ROD);
-        apply(rod);
+        apply(rod, repairable);
         return rod;
     }
 
-    /** Transforme une canne existante en grappin, en conservant ses enchantements et son usure. */
-    public void apply(ItemStack rod) {
+    /**
+     * Transforme une canne existante en grappin, ou rafraichit un grappin, en conservant
+     * ses enchantements et son usure.
+     *
+     * @param repairable true / false pour imposer le choix ; null pour garder celui deja
+     *                   inscrit sur l'objet, ou a defaut la valeur de la config
+     */
+    public void apply(ItemStack rod, Boolean repairable) {
         ItemMeta meta = rod.getItemMeta();
         Settings settings = plugin.settings();
+        PersistentDataContainer data = meta.getPersistentDataContainer();
+        if (repairable != null) {
+            data.set(repairableKey, PersistentDataType.BYTE, (byte) (repairable ? 1 : 0));
+        }
 
         meta.displayName(MM.deserialize(settings.itemName()));
         List<String> lore = new ArrayList<>(settings.itemLore());
-        if (!settings.repairable() && !settings.unrepairableLine().isEmpty()) {
+        if (!resolveRepairable(data) && !settings.unrepairableLine().isEmpty()) {
             lore.add(settings.unrepairableLine());
         }
         meta.lore(lore.stream().map(MM::deserialize).toList());
@@ -60,7 +74,6 @@ public final class GrappinItem {
             }
         }
 
-        PersistentDataContainer data = meta.getPersistentDataContainer();
         data.set(plugin.grappinKey(), PersistentDataType.BYTE, (byte) 1);
         if (meta instanceof Damageable damageable) {
             // Une mise a jour ne doit jamais effacer l'usure deja enregistree.
@@ -76,7 +89,7 @@ public final class GrappinItem {
      *
      * Chaque grappin garde la plus forte usure jamais constatee. Si sa durabilite remonte
      * au-dessus - commande de reparation, plugin tiers, n'importe quelle source - elle est
-     * remise au niveau enregistre. Quand la reparation est autorisee dans la config, le
+     * remise au niveau enregistre. Quand ce grappin est reparable, le
      * registre suit simplement l'usure reelle, pour qu'une reactivation ulterieure du
      * blocage parte de l'etat du moment et non d'une vieille valeur.
      *
@@ -92,7 +105,7 @@ public final class GrappinItem {
         Integer recorded = data.get(wearKey, PersistentDataType.INTEGER);
         int current = damageable.getDamage();
 
-        if (recorded == null || plugin.settings().repairable() || current > recorded) {
+        if (recorded == null || resolveRepairable(data) || current > recorded) {
             if (recorded == null || recorded != current) {
                 data.set(wearKey, PersistentDataType.INTEGER, current);
                 item.setItemMeta(damageable);
@@ -124,6 +137,16 @@ public final class GrappinItem {
             }
         }
         return reverted;
+    }
+
+    /** Un objet qui n'est pas un grappin n'est pas concerne : il est considere reparable. */
+    public boolean isRepairable(ItemStack item) {
+        return !isGrappin(item) || resolveRepairable(item.getItemMeta().getPersistentDataContainer());
+    }
+
+    private boolean resolveRepairable(PersistentDataContainer data) {
+        Byte choice = data.get(repairableKey, PersistentDataType.BYTE);
+        return choice != null ? choice == 1 : plugin.settings().repairable();
     }
 
     public boolean isGrappin(ItemStack item) {
