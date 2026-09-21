@@ -1,11 +1,14 @@
 package fr.sparta.grappin;
 
+import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Instantane immuable de config.yml, reconstruit a chaque rechargement. */
 public record Settings(
@@ -13,6 +16,7 @@ public record Settings(
         double cooldownSeconds,
         double strength,
         long fallProtectionMillis,
+        int durabilityCost,
         String itemName,
         List<String> itemLore,
         int maxDurability,
@@ -20,12 +24,20 @@ public record Settings(
 ) {
 
     public static Settings from(FileConfiguration config) {
-        Map<String, String> messages = new HashMap<>();
+        // Une config generee par une version precedente n'a pas les nouveaux messages :
+        // on complete avec ceux embarques dans le JAR plutot que d'afficher une erreur.
+        Set<String> keys = new HashSet<>();
         ConfigurationSection section = config.getConfigurationSection("messages");
         if (section != null) {
-            for (String key : section.getKeys(false)) {
-                messages.put(key, section.getString(key, ""));
-            }
+            keys.addAll(section.getKeys(false));
+        }
+        Configuration defaults = config.getDefaults();
+        if (defaults != null && defaults.getConfigurationSection("messages") != null) {
+            keys.addAll(defaults.getConfigurationSection("messages").getKeys(false));
+        }
+        Map<String, String> messages = new HashMap<>();
+        for (String key : keys) {
+            messages.put(key, config.getString("messages." + key, ""));
         }
 
         return new Settings(
@@ -33,6 +45,7 @@ public record Settings(
                 config.getDouble("grappin.cooldown", 2),
                 config.getDouble("grappin.strength", 1.0),
                 (long) (config.getDouble("grappin.fall-protection-seconds", 5) * 1000),
+                config.getInt("grappin.durability-cost", 1),
                 config.getString("item.name", "<!italic><#d9a441><b>Grappin</b>"),
                 config.getStringList("item.lore"),
                 config.getInt("item.max-durability", 0),

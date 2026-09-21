@@ -81,13 +81,10 @@ public final class GrappinCommand implements TabExecutor {
             plugin.send(player, "not-a-rod");
             return;
         }
-        if (plugin.items().isGrappin(held)) {
-            plugin.send(player, "already-grappin");
-            return;
-        }
-
+        // Deja un grappin : on le remet a jour (nom, description) sans toucher a son usure.
+        boolean update = plugin.items().isGrappin(held);
         plugin.items().apply(held);
-        plugin.send(player, "converted");
+        plugin.send(player, update ? "updated" : "converted");
     }
 
     @Override
