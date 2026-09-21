@@ -1,0 +1,22 @@
+name: Grappin
+version: '${project.version}'
+main: fr.sparta.grappin.GrappinPlugin
+api-version: '1.21'
+author: Sparta
+description: Canne a peche grappin.
+
+commands:
+  grappin:
+    description: Gestion des grappins.
+    usage: /grappin <give|set|reload>
+
+permissions:
+  grappin.use:
+    description: Utiliser un grappin.
+    default: true
+  grappin.admin:
+    description: Donner, creer et recharger les grappins.
+    default: op
+  grappin.bypass.cooldown:
+    description: Ignorer le temps de recharge.
+    default: false

@@ -1,0 +1,46 @@
+# Grappin : lancez la canne, plantez le bouchon dans un bloc, puis ramenez la ligne
+# pour etre projete vers le point d'accroche.
+#
+# La durabilite est celle de la canne : en vanilla, recuperer un bouchon plante dans
+# un bloc coute 2 points. Solidite et Raccommodage fonctionnent donc normalement.
+
+grappin:
+  # Distance maximale, en blocs, entre le joueur et le bouchon plante.
+  range: 30
+  # Temps de recharge entre deux utilisations, en secondes.
+  cooldown: 2
+  # Multiplicateur de puissance de la projection.
+  strength: 1.0
+  # Apres un grappin, la premiere chute survenant dans ce delai (secondes) est annulee.
+  fall-protection-seconds: 5
+
+item:
+  # Le grappin est reconnu par un marqueur invisible, pas par son nom :
+  # on peut donc le renommer a l'enclume sans le casser, et utiliser des degrades ici.
+  name: "<!italic><gradient:#8c6239:#d9a441><b>Grappin</b></gradient>"
+  lore:
+    - "<!italic> "
+    - "<!italic><#8a8175><i>Là où la corde porte, le guerrier suit.</i>"
+    - "<!italic><gradient:#3b2f22:#8c6239:#3b2f22>━━━━━━━━━━━━━━━━</gradient>"
+    - "<!italic><#d9a441>❯ <#a89f91>Lancez <#6b6355>et plantez le bouchon dans un bloc"
+    - "<!italic><#d9a441>❯ <#a89f91>Ramenez <#6b6355>la ligne pour être projeté"
+    - "<!italic><gradient:#3b2f22:#8c6239:#3b2f22>━━━━━━━━━━━━━━━━</gradient>"
+    - "<!italic><#6b6355>Chaque utilisation use la canne."
+  # Durabilite maximale des grappins crees. 0 = durabilite vanilla d'une canne (64),
+  # soit 32 utilisations. Ne s'applique qu'aux grappins crees ou convertis ensuite.
+  max-durability: 0
+
+messages:
+  prefix: "<gradient:#8c6239:#d9a441><b>Grappin</b></gradient> <#5a4a38>┃ "
+  cooldown: "<#b5563f>Grappin en recharge <#6b6355>· <#e8d5b0><time> s"
+  too-far: "<#b5563f>Trop loin <#6b6355>· portée <#e8d5b0><range> blocs"
+  no-permission: "<#b5563f>Vous n'avez pas la permission."
+  usage: "<#a89f91>Usage : <#d9a441>/grappin give [joueur] <#6b6355>· <#d9a441>/grappin set <#6b6355>· <#d9a441>/grappin reload"
+  player-only: "<#b5563f>Cette commande est réservée aux joueurs."
+  player-not-found: "<#b5563f>Joueur introuvable : <#e8d5b0><player>"
+  given: "<#8fb26a>Grappin donné à <#e8d5b0><player><#a89f91>."
+  received: "<#8fb26a>Vous avez reçu un grappin."
+  not-a-rod: "<#b5563f>Tenez une canne à pêche en main principale."
+  already-grappin: "<#a89f91>Cette canne est déjà un grappin."
+  converted: "<#8fb26a>Votre canne est désormais un grappin. <#6b6355>Ses enchantements sont conservés."
+  reloaded: "<#8fb26a>Configuration rechargée."
