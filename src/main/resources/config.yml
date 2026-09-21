@@ -30,6 +30,13 @@ item:
   # Durabilite maximale des grappins crees. 0 = durabilite vanilla d'une canne (64).
   # Ne s'applique qu'aux grappins crees ou mis a jour ensuite avec /grappin set.
   max-durability: 0
+  # false : le grappin ne peut pas etre repare, par aucun moyen - Raccommodage, enclume,
+  # meule, etabli, ni commande /repair d'un autre plugin. Sa durabilite ne peut que baisser.
+  # true : il se repare comme n'importe quelle canne.
+  repairable: false
+  # Ligne ajoutee a la description quand le grappin est irreparable. Vide = aucune ligne.
+  # Les grappins existants la recoivent avec /grappin set.
+  unrepairable-line: "<!italic><#b5563f>✦ <#a89f91>Irréparable"
 
 messages:
   prefix: "<gradient:#8c6239:#d9a441><b>Grappin</b></gradient> <#5a4a38>┃ "
@@ -46,3 +53,4 @@ messages:
   converted: "<#8fb26a>Votre canne est désormais un grappin. <#6b6355>Ses enchantements sont conservés."
   updated: "<#8fb26a>Grappin mis à jour. <#6b6355>Son usure et ses enchantements sont conservés."
   reloaded: "<#8fb26a>Configuration rechargée."
+  repair-blocked: "<#b5563f>Grappin irréparable <#6b6355>· la réparation a été annulée"

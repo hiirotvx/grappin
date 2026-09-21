@@ -5,6 +5,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -24,6 +25,18 @@ public final class GrappinPlugin extends JavaPlugin {
         items = new GrappinItem(this);
 
         getServer().getPluginManager().registerEvents(new GrappinListener(this), this);
+        getServer().getPluginManager().registerEvents(new RepairGuard(this), this);
+
+        // Filet de securite contre les reparations qui ne declenchent aucun evenement
+        // (commandes /repair d'EssentialsX, CMI...) : toutes les 2 secondes, les grappins
+        // des joueurs connectes sont ramenes a leur usure enregistree.
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (items.enforceInventory(player)) {
+                    actionBar(player, "repair-blocked");
+                }
+            }
+        }, 40L, 40L);
 
         PluginCommand command = getCommand("grappin");
         if (command != null) {

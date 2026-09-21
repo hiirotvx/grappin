@@ -104,6 +104,14 @@ public final class GrappinListener implements Listener {
             }
         }
 
+        // Avant tout tir : une durabilite regagnee illegitimement est annulee ici,
+        // pour que le joueur n'en tire jamais le moindre grappin supplementaire.
+        ItemStack held = player.getInventory().getItem(hand);
+        if (plugin.items().enforceWear(held)) {
+            player.getInventory().setItem(hand, held);
+            plugin.actionBar(player, "repair-blocked");
+        }
+
         World world = player.getWorld();
         Location eye = player.getEyeLocation();
         // Les blocs traversables (herbes, fleurs) ne retiennent pas le grappin.
@@ -170,6 +178,10 @@ public final class GrappinListener implements Listener {
         if (!plugin.items().isGrappin(after) || !(after.getItemMeta() instanceof Damageable damageable)) {
             return; // brisee : le jeu joue deja le son de casse
         }
+        // Enregistre immediatement la nouvelle usure : une reparation juste apres ce tir
+        // doit ramener a ce niveau, pas a celui d'avant.
+        plugin.items().enforceWear(after);
+        player.getInventory().setItem(hand, after);
         int max = damageable.hasMaxDamage() ? damageable.getMaxDamage() : after.getType().getMaxDurability();
         int usesLeft = Math.max(0, (max - damageable.getDamage()) / cost);
         plugin.actionBar(player, "uses-left", Placeholder.unparsed("uses", String.valueOf(usesLeft)));

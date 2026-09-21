@@ -20,6 +20,8 @@ public record Settings(
         String itemName,
         List<String> itemLore,
         int maxDurability,
+        boolean repairable,
+        String unrepairableLine,
         Map<String, String> messages
 ) {
 
@@ -49,6 +51,8 @@ public record Settings(
                 config.getString("item.name", "<!italic><#d9a441><b>Grappin</b>"),
                 config.getStringList("item.lore"),
                 config.getInt("item.max-durability", 0),
+                config.getBoolean("item.repairable", false),
+                config.getString("item.unrepairable-line", ""),
                 Map.copyOf(messages)
         );
     }
