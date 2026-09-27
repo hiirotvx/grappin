@@ -19,9 +19,14 @@ public record Settings(
         int durabilityCost,
         String itemName,
         List<String> itemLore,
+        String wearLine,
         int maxDurability,
         boolean repairable,
         String unrepairableLine,
+        boolean unlimited,
+        String unlimitedLine,
+        boolean noCooldown,
+        String noCooldownLine,
         Map<String, String> messages
 ) {
 
@@ -39,7 +44,9 @@ public record Settings(
         }
         Map<String, String> messages = new HashMap<>();
         for (String key : keys) {
-            messages.put(key, config.getString("messages." + key, ""));
+            // Sans valeur par defaut explicite : getString(path, def) ignorerait celles du JAR.
+            String value = config.getString("messages." + key);
+            messages.put(key, value != null ? value : "");
         }
 
         return new Settings(
@@ -50,9 +57,15 @@ public record Settings(
                 config.getInt("grappin.durability-cost", 1),
                 config.getString("item.name", "<!italic><#d9a441><b>Grappin</b>"),
                 config.getStringList("item.lore"),
+                // Vide par defaut : une ancienne config a encore cette phrase dans item.lore.
+                config.getString("item.wear-line", ""),
                 config.getInt("item.max-durability", 0),
                 config.getBoolean("item.repairable", false),
                 config.getString("item.unrepairable-line", ""),
+                config.getBoolean("item.unlimited", false),
+                config.getString("item.unlimited-line", "<!italic><#d9a441>✦ <#a89f91>Lancers illimités"),
+                config.getBoolean("item.no-cooldown", false),
+                config.getString("item.no-cooldown-line", "<!italic><#d9a441>✦ <#a89f91>Sans recharge"),
                 Map.copyOf(messages)
         );
     }

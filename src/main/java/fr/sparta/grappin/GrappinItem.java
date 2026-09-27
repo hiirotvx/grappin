@@ -30,17 +30,22 @@ public final class GrappinItem {
     private final NamespacedKey wearKey;
     // Choix fait a la creation : 1 = reparable, 0 = irreparable. Absent = valeur de la config.
     private final NamespacedKey repairableKey;
+    // Memes conventions : 1 = lancers illimites / sans cooldown, 0 = non, absent = config.
+    private final NamespacedKey unlimitedKey;
+    private final NamespacedKey noCooldownKey;
 
     public GrappinItem(GrappinPlugin plugin) {
         this.plugin = plugin;
         this.wearKey = new NamespacedKey(plugin, "recorded_wear");
         this.repairableKey = new NamespacedKey(plugin, "repairable");
+        this.unlimitedKey = new NamespacedKey(plugin, "unlimited");
+        this.noCooldownKey = new NamespacedKey(plugin, "no_cooldown");
     }
 
-    /** @param repairable true / false pour imposer le choix, null pour la valeur de la config */
-    public ItemStack create(Boolean repairable) {
+    /** @param options chaque option a true / false pour imposer le choix, null pour la valeur de la config */
+    public ItemStack create(GrappinOptions options) {
         ItemStack rod = new ItemStack(Material.FISHING_ROD);
-        apply(rod, repairable);
+        apply(rod, options);
         return rod;
     }
 
@@ -48,22 +53,25 @@ public final class GrappinItem {
      * Transforme une canne existante en grappin, ou rafraichit un grappin, en conservant
      * ses enchantements et son usure.
      *
-     * @param repairable true / false pour imposer le choix ; null pour garder celui deja
-     *                   inscrit sur l'objet, ou a defaut la valeur de la config
+     * @param options chaque option a true / false pour imposer le choix ; null pour garder
+     *                celui deja inscrit sur l'objet, ou a defaut la valeur de la config
      */
-    public void apply(ItemStack rod, Boolean repairable) {
+    public void apply(ItemStack rod, GrappinOptions options) {
         ItemMeta meta = rod.getItemMeta();
         Settings settings = plugin.settings();
         PersistentDataContainer data = meta.getPersistentDataContainer();
-        if (repairable != null) {
-            data.set(repairableKey, PersistentDataType.BYTE, (byte) (repairable ? 1 : 0));
-        }
+        store(data, repairableKey, options.repairable());
+        store(data, unlimitedKey, options.unlimited());
+        store(data, noCooldownKey, options.noCooldown());
 
         meta.displayName(MM.deserialize(settings.itemName()));
         List<String> lore = new ArrayList<>(settings.itemLore());
-        if (!resolveRepairable(data) && !settings.unrepairableLine().isEmpty()) {
-            lore.add(settings.unrepairableLine());
-        }
+        boolean unlimited = resolve(data, unlimitedKey, settings.unlimited());
+        // Un grappin illimite ne s'use pas : la mention d'usure serait fausse.
+        addLine(lore, !unlimited, settings.wearLine());
+        addLine(lore, !resolveRepairable(data), settings.unrepairableLine());
+        addLine(lore, unlimited, settings.unlimitedLine());
+        addLine(lore, resolve(data, noCooldownKey, settings.noCooldown()), settings.noCooldownLine());
         meta.lore(lore.stream().map(MM::deserialize).toList());
 
         if (settings.maxDurability() > 0 && meta instanceof Damageable damageable) {
@@ -82,6 +90,18 @@ public final class GrappinItem {
             data.set(wearKey, PersistentDataType.INTEGER, Math.min(recorded, ceiling));
         }
         rod.setItemMeta(meta);
+    }
+
+    private static void store(PersistentDataContainer data, NamespacedKey key, Boolean value) {
+        if (value != null) {
+            data.set(key, PersistentDataType.BYTE, (byte) (value ? 1 : 0));
+        }
+    }
+
+    private static void addLine(List<String> lore, boolean active, String line) {
+        if (active && !line.isEmpty()) {
+            lore.add(line);
+        }
     }
 
     /**
@@ -144,9 +164,24 @@ public final class GrappinItem {
         return !isGrappin(item) || resolveRepairable(item.getItemMeta().getPersistentDataContainer());
     }
 
+    /** Un grappin illimite ne perd aucune durabilite en s'accrochant. */
+    public boolean isUnlimited(ItemStack item) {
+        return isGrappin(item) && resolve(item.getItemMeta().getPersistentDataContainer(), unlimitedKey, plugin.settings().unlimited());
+    }
+
+    /** Un grappin sans cooldown peut etre relance sans attendre le temps de recharge. */
+    public boolean hasNoCooldown(ItemStack item) {
+        return isGrappin(item) && resolve(item.getItemMeta().getPersistentDataContainer(), noCooldownKey, plugin.settings().noCooldown());
+    }
+
     private boolean resolveRepairable(PersistentDataContainer data) {
-        Byte choice = data.get(repairableKey, PersistentDataType.BYTE);
-        return choice != null ? choice == 1 : plugin.settings().repairable();
+        return resolve(data, repairableKey, plugin.settings().repairable());
+    }
+
+    /** Choix inscrit sur le grappin ; a defaut (anciens grappins), la valeur de la config. */
+    private static boolean resolve(PersistentDataContainer data, NamespacedKey key, boolean fallback) {
+        Byte choice = data.get(key, PersistentDataType.BYTE);
+        return choice != null ? choice == 1 : fallback;
     }
 
     public boolean isGrappin(ItemStack item) {

@@ -8,7 +8,7 @@ description: Canne a peche grappin.
 commands:
   grappin:
     description: Gestion des grappins.
-    usage: /grappin <give|set|reload>
+    usage: /grappin <give|set|reload> [joueur] [reparable|irreparable] [illimite|limite] [sans-cooldown|cooldown]
 
 permissions:
   grappin.use:

@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -18,9 +19,6 @@ import java.util.Set;
 public final class GrappinCommand implements TabExecutor {
 
     private static final List<String> SUBCOMMANDS = List.of("give", "set", "reload");
-    private static final List<String> OPTIONS = List.of("reparable", "irreparable");
-    private static final Set<String> REPAIRABLE = Set.of("reparable", "réparable", "repairable");
-    private static final Set<String> UNREPAIRABLE = Set.of("irreparable", "irréparable", "unrepairable");
 
     private final GrappinPlugin plugin;
 
@@ -52,17 +50,17 @@ public final class GrappinCommand implements TabExecutor {
     }
 
     /**
-     * /grappin give [joueur] [reparable|irreparable]
-     * Les deux arguments sont facultatifs et peuvent etre donnes dans n'importe quel ordre.
+     * /grappin give [joueur] [reparable|irreparable] [illimite|limite] [sans-cooldown|cooldown]
+     * Tous les arguments sont facultatifs et peuvent etre donnes dans n'importe quel ordre.
      */
     private void give(CommandSender sender, String[] args) {
         Player target = null;
-        Boolean repairable = null;
+        GrappinOptions options = GrappinOptions.NONE;
 
         for (int i = 1; i < args.length; i++) {
-            Boolean option = parseOption(args[i]);
-            if (option != null) {
-                repairable = option;
+            GrappinOptions withOption = options.with(args[i]);
+            if (withOption != null) {
+                options = withOption;
             } else if (target == null) {
                 target = Bukkit.getPlayerExact(args[i]);
                 if (target == null) {
@@ -83,13 +81,13 @@ public final class GrappinCommand implements TabExecutor {
             target = player;
         }
 
-        ItemStack grappin = plugin.items().create(repairable);
+        ItemStack grappin = plugin.items().create(options);
         Player receiver = target;
         // Inventaire plein : l'objet tombe aux pieds du joueur plutot que d'etre perdu.
         receiver.getInventory().addItem(grappin).values()
                 .forEach(left -> receiver.getWorld().dropItemNaturally(receiver.getLocation(), left));
 
-        TagResolver state = state(plugin.items().isRepairable(grappin));
+        TagResolver state = state(grappin);
         plugin.send(sender, "given", Placeholder.unparsed("player", receiver.getName()), state);
         if (!receiver.equals(sender)) {
             plugin.send(receiver, "received", state);
@@ -97,8 +95,8 @@ public final class GrappinCommand implements TabExecutor {
     }
 
     /**
-     * /grappin set [reparable|irreparable]
-     * Sans option : une canne neuve prend la valeur de la config, un grappin garde son choix.
+     * /grappin set [options...]
+     * Option non precisee : une canne neuve prend la valeur de la config, un grappin garde son choix.
      */
     private void set(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
@@ -106,10 +104,10 @@ public final class GrappinCommand implements TabExecutor {
             return;
         }
 
-        Boolean repairable = null;
-        if (args.length >= 2) {
-            repairable = parseOption(args[1]);
-            if (repairable == null || args.length > 2) {
+        GrappinOptions options = GrappinOptions.NONE;
+        for (int i = 1; i < args.length; i++) {
+            options = options.with(args[i]);
+            if (options == null) {
                 plugin.send(player, "usage");
                 return;
             }
@@ -123,26 +121,24 @@ public final class GrappinCommand implements TabExecutor {
 
         // Deja un grappin : on le remet a jour (nom, description) sans toucher a son usure.
         boolean update = plugin.items().isGrappin(held);
-        plugin.items().apply(held, repairable);
+        plugin.items().apply(held, options);
         player.getInventory().setItemInMainHand(held);
-        plugin.send(player, update ? "updated" : "converted", state(plugin.items().isRepairable(held)));
+        plugin.send(player, update ? "updated" : "converted", state(held));
     }
 
-    private TagResolver state(boolean repairable) {
-        return Placeholder.parsed("state",
-                plugin.settings().message(repairable ? "state-repairable" : "state-unrepairable"));
-    }
-
-    /** Accepte les variantes avec et sans accent, et l'anglais. */
-    private static Boolean parseOption(String raw) {
-        String value = raw.toLowerCase(Locale.ROOT);
-        if (REPAIRABLE.contains(value)) {
-            return Boolean.TRUE;
+    /** Resume des options du grappin pour <state> : "irreparable, illimite, sans recharge". */
+    private TagResolver state(ItemStack grappin) {
+        Settings settings = plugin.settings();
+        GrappinItem items = plugin.items();
+        List<String> parts = new ArrayList<>();
+        parts.add(settings.message(items.isRepairable(grappin) ? "state-repairable" : "state-unrepairable"));
+        if (items.isUnlimited(grappin)) {
+            parts.add(settings.message("state-unlimited"));
         }
-        if (UNREPAIRABLE.contains(value)) {
-            return Boolean.FALSE;
+        if (items.hasNoCooldown(grappin)) {
+            parts.add(settings.message("state-no-cooldown"));
         }
-        return null;
+        return Placeholder.parsed("state", String.join(settings.message("state-separator"), parts));
     }
 
     @Override
@@ -155,16 +151,20 @@ public final class GrappinCommand implements TabExecutor {
 
         if (args.length == 1) {
             suggestions.addAll(SUBCOMMANDS);
-        } else if (args[0].equalsIgnoreCase("give") && args.length <= 3) {
-            boolean optionGiven = false;
+        } else if (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("set")) {
+            // On ne propose que les categories d'options pas encore choisies.
+            Set<GrappinOptions.Kind> given = EnumSet.noneOf(GrappinOptions.Kind.class);
             boolean playerGiven = false;
             for (int i = 1; i < args.length - 1; i++) {
-                if (parseOption(args[i]) != null) optionGiven = true; else playerGiven = true;
+                GrappinOptions.Kind kind = GrappinOptions.kindOf(args[i]);
+                if (kind != null) given.add(kind); else playerGiven = true;
             }
-            if (!optionGiven) suggestions.addAll(OPTIONS);
-            if (!playerGiven) Bukkit.getOnlinePlayers().forEach(p -> suggestions.add(p.getName()));
-        } else if (args[0].equalsIgnoreCase("set") && args.length == 2) {
-            suggestions.addAll(OPTIONS);
+            for (GrappinOptions.Kind kind : GrappinOptions.Kind.values()) {
+                if (!given.contains(kind)) suggestions.addAll(GrappinOptions.SUGGESTIONS.get(kind));
+            }
+            if (args[0].equalsIgnoreCase("give") && !playerGiven) {
+                Bukkit.getOnlinePlayers().forEach(p -> suggestions.add(p.getName()));
+            }
         }
 
         return suggestions.stream()

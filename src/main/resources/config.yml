@@ -26,7 +26,8 @@ item:
     - "<!italic><#d9a441>❯ <#a89f91>Clic droit <#6b6355>en visant un bloc"
     - "<!italic><#d9a441>❯ <#a89f91>Accroupi <#6b6355>pour viser une porte ou un coffre"
     - "<!italic><gradient:#3b2f22:#8c6239:#3b2f22>━━━━━━━━━━━━━━━━</gradient>"
-    - "<!italic><#6b6355>Chaque grappin réussi use la canne."
+  # Ajoutee sous la description, seulement pour les grappins qui s'usent (pas les illimites).
+  wear-line: "<!italic><#6b6355>Chaque grappin réussi use la canne."
   # Durabilite maximale des grappins crees. 0 = durabilite vanilla d'une canne (64).
   # Ne s'applique qu'aux grappins crees ou mis a jour ensuite avec /grappin set.
   max-durability: 0
@@ -43,13 +44,28 @@ item:
   # Les grappins existants la recoivent avec /grappin set.
   unrepairable-line: "<!italic><#b5563f>✦ <#a89f91>Irréparable"
 
+  # Lancers illimites : le grappin ne perd aucune durabilite en s'accrochant.
+  #   /grappin give [joueur] illimite      /grappin give [joueur] limite
+  # Comme pour reparable, ce choix est porte par chaque grappin ; cette valeur n'est qu'un defaut.
+  unlimited: false
+  unlimited-line: "<!italic><#d9a441>✦ <#a89f91>Lancers illimités"
+
+  # Sans cooldown : le grappin peut etre relance sans attendre le temps de recharge.
+  #   /grappin give [joueur] sans-cooldown /grappin give [joueur] cooldown
+  no-cooldown: false
+  no-cooldown-line: "<!italic><#d9a441>✦ <#a89f91>Sans recharge"
+
+  # Toutes les options se combinent, dans n'importe quel ordre :
+  #   /grappin give Steve irreparable illimite sans-cooldown
+  #   /grappin set reparable cooldown     (les options non precisees sont conservees)
+
 messages:
   prefix: "<gradient:#8c6239:#d9a441><b>Grappin</b></gradient> <#5a4a38>┃ "
   cooldown: "<#b5563f>Grappin en recharge <#6b6355>· <#e8d5b0><time> s"
   nothing-to-grab: "<#b5563f>Rien à agripper <#6b6355>· portée <#e8d5b0><range> blocs"
   uses-left: "<#a89f91>Grappin <#6b6355>· <#e8d5b0><uses> <#a89f91>utilisations restantes"
   no-permission: "<#b5563f>Vous n'avez pas la permission."
-  usage: "<#a89f91>Usage : <#d9a441>/grappin give [joueur] [reparable|irreparable] <#6b6355>· <#d9a441>/grappin set [reparable|irreparable] <#6b6355>· <#d9a441>/grappin reload"
+  usage: "<#a89f91>Usage : <#d9a441>/grappin give [joueur] [options] <#6b6355>· <#d9a441>/grappin set [options] <#6b6355>· <#d9a441>/grappin reload <#6b6355>· options : <#a89f91>reparable|irreparable illimite|limite sans-cooldown|cooldown"
   player-only: "<#b5563f>Cette commande est réservée aux joueurs."
   player-not-found: "<#b5563f>Joueur introuvable : <#e8d5b0><player>"
   given: "<#8fb26a>Grappin <state> <#8fb26a>donné à <#e8d5b0><player><#a89f91>."
@@ -60,5 +76,8 @@ messages:
   # Remplacent <state> dans les messages ci-dessus.
   state-repairable: "<#8fb26a>réparable"
   state-unrepairable: "<#b5563f>irréparable"
+  state-unlimited: "<#d9a441>illimité"
+  state-no-cooldown: "<#d9a441>sans recharge"
+  state-separator: "<#6b6355>, "
   reloaded: "<#8fb26a>Configuration rechargée."
   repair-blocked: "<#b5563f>Grappin irréparable <#6b6355>· la réparation a été annulée"

@@ -94,7 +94,7 @@ public final class GrappinListener implements Listener {
         if (last != null && now - last < DOUBLE_EVENT_MILLIS) {
             return;
         }
-        if (!player.hasPermission("grappin.bypass.cooldown")) {
+        if (!player.hasPermission("grappin.bypass.cooldown") && !plugin.items().hasNoCooldown(item)) {
             long cooldownMillis = (long) (settings.cooldownSeconds() * 1000);
             if (last != null && now - last < cooldownMillis) {
                 double left = (cooldownMillis - (now - last)) / 1000.0;
@@ -158,7 +158,9 @@ public final class GrappinListener implements Listener {
         world.playSound(eye, Sound.ENTITY_FISHING_BOBBER_THROW, 1.0f, 0.8f);
         world.playSound(eye, Sound.ENTITY_FISHING_BOBBER_RETRIEVE, 1.0f, 0.6f);
 
-        consumeDurability(player, hand, settings);
+        if (!plugin.items().isUnlimited(held)) {
+            consumeDurability(player, hand, settings);
+        }
     }
 
     /**
