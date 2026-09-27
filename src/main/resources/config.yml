@@ -4,16 +4,28 @@
 grappin:
   # Distance maximale, en blocs, a laquelle on peut s'accrocher.
   range: 30
-  # Temps de recharge entre deux utilisations reussies, en secondes.
-  cooldown: 2
+  # Temps de recharge entre deux utilisations reussies, en secondes, pour chaque niveau.
+  # Chaque grappin porte son niveau, choisi au give / set : court, moyen ou long.
+  # Modifiable a tout moment : /grappin reload s'applique aussitot a tous les grappins.
+  cooldowns:
+    court: 1
+    moyen: 2
+    long: 4
   # Multiplicateur de puissance de la projection.
   strength: 1.0
   # Apres un grappin, la premiere chute survenant dans ce delai (secondes) est annulee.
   fall-protection-seconds: 5
   # Points de durabilite retires a la canne a chaque grappin reussi.
   # Solidite reduit cette usure et Raccommodage la repare, comme pour tout outil.
-  # Une canne vanilla a 64 points : avec un cout de 1, cela fait 64 utilisations.
   durability-cost: 1
+  # Durabilite maximale, en points, pour chaque niveau : normale, bonne ou excellente.
+  # Avec un cout de 1, c'est aussi le nombre d'utilisations. Une canne vanilla a 64 points.
+  # Fixee sur l'objet a sa creation : un changement ici ne touche que les grappins
+  # crees ensuite, ou mis a jour avec /grappin set.
+  durabilities:
+    normale: 64
+    bonne: 128
+    excellente: 256
 
 item:
   # Le grappin est reconnu par un marqueur invisible, pas par son nom :
@@ -28,36 +40,42 @@ item:
     - "<!italic><gradient:#3b2f22:#8c6239:#3b2f22>━━━━━━━━━━━━━━━━</gradient>"
   # Ajoutee sous la description, seulement pour les grappins qui s'usent (pas les illimites).
   wear-line: "<!italic><#6b6355>Chaque grappin réussi use la canne."
-  # Durabilite maximale des grappins crees. 0 = durabilite vanilla d'une canne (64).
-  # Ne s'applique qu'aux grappins crees ou mis a jour ensuite avec /grappin set.
-  max-durability: 0
-  # Chaque grappin porte son propre choix, fixe a sa creation :
-  #   /grappin give [joueur] reparable     /grappin give [joueur] irreparable
-  #   /grappin set reparable               /grappin set irreparable
-  # Un grappin irreparable ne peut etre repare par aucun moyen : Raccommodage, enclume,
-  # meule, etabli, ni commande /repair d'un autre plugin. Sa durabilite ne peut que baisser.
+
+  # Chaque grappin porte ses propres options, fixees a sa creation. Elles se combinent
+  # dans n'importe quel ordre :
+  #   /grappin give Steve irreparable bonne court
+  #   /grappin give illimite long
+  #   /grappin set reparable excellente    (les options non precisees sont conservees)
   #
-  # Cette valeur ne sert que par defaut : pour un give ou un set sans option, et pour les
-  # anciens grappins crees avant l'existence de ce choix.
+  # Les valeurs ci-dessous ne servent que par defaut : pour un give ou un set sans
+  # l'option, et pour les anciens grappins crees avant l'existence de ce choix.
+  # Chaque "-line" est ajoutee a la description de l'objet. Vide = aucune ligne.
+  # Les grappins existants recoivent les nouvelles lignes avec /grappin set.
+
+  # Durabilite : normale | bonne | excellente (valeurs dans grappin.durabilities).
+  durability: normale
+  durability-lines:
+    normale: "<!italic><#d9a441>✦ <#a89f91>Durabilité normale"
+    bonne: "<!italic><#d9a441>✦ <#a89f91>Bonne durabilité"
+    excellente: "<!italic><#d9a441>✦ <#a89f91>Excellente durabilité"
+
+  # Recharge : court | moyen | long (durees dans grappin.cooldowns).
+  cooldown: moyen
+  cooldown-lines:
+    court: "<!italic><#d9a441>✦ <#a89f91>Recharge courte"
+    moyen: "<!italic><#d9a441>✦ <#a89f91>Recharge moyenne"
+    long: "<!italic><#d9a441>✦ <#a89f91>Recharge longue"
+
+  # reparable | irreparable. Un grappin irreparable ne peut etre repare par aucun moyen :
+  # Raccommodage, enclume, meule, etabli, ni commande /repair d'un autre plugin.
+  # Sa durabilite ne peut que baisser.
   repairable: false
-  # Ligne ajoutee a la description quand le grappin est irreparable. Vide = aucune ligne.
-  # Les grappins existants la recoivent avec /grappin set.
   unrepairable-line: "<!italic><#b5563f>✦ <#a89f91>Irréparable"
 
-  # Lancers illimites : le grappin ne perd aucune durabilite en s'accrochant.
-  #   /grappin give [joueur] illimite      /grappin give [joueur] limite
-  # Comme pour reparable, ce choix est porte par chaque grappin ; cette valeur n'est qu'un defaut.
+  # illimite | limite. Un grappin illimite ne perd aucune durabilite en s'accrochant ;
+  # son niveau de durabilite n'est alors pas affiche.
   unlimited: false
   unlimited-line: "<!italic><#d9a441>✦ <#a89f91>Lancers illimités"
-
-  # Sans cooldown : le grappin peut etre relance sans attendre le temps de recharge.
-  #   /grappin give [joueur] sans-cooldown /grappin give [joueur] cooldown
-  no-cooldown: false
-  no-cooldown-line: "<!italic><#d9a441>✦ <#a89f91>Sans recharge"
-
-  # Toutes les options se combinent, dans n'importe quel ordre :
-  #   /grappin give Steve irreparable illimite sans-cooldown
-  #   /grappin set reparable cooldown     (les options non precisees sont conservees)
 
 messages:
   prefix: "<gradient:#8c6239:#d9a441><b>Grappin</b></gradient> <#5a4a38>┃ "
@@ -65,7 +83,7 @@ messages:
   nothing-to-grab: "<#b5563f>Rien à agripper <#6b6355>· portée <#e8d5b0><range> blocs"
   uses-left: "<#a89f91>Grappin <#6b6355>· <#e8d5b0><uses> <#a89f91>utilisations restantes"
   no-permission: "<#b5563f>Vous n'avez pas la permission."
-  usage: "<#a89f91>Usage : <#d9a441>/grappin give [joueur] [options] <#6b6355>· <#d9a441>/grappin set [options] <#6b6355>· <#d9a441>/grappin reload <#6b6355>· options : <#a89f91>reparable|irreparable illimite|limite sans-cooldown|cooldown"
+  usage: "<#a89f91>Usage : <#d9a441>/grappin give [joueur] [options] <#6b6355>· <#d9a441>/grappin set [options] <#6b6355>· <#d9a441>/grappin reload <#6b6355>· options : <#a89f91>reparable|irreparable illimite|limite normale|bonne|excellente court|moyen|long"
   player-only: "<#b5563f>Cette commande est réservée aux joueurs."
   player-not-found: "<#b5563f>Joueur introuvable : <#e8d5b0><player>"
   given: "<#8fb26a>Grappin <state> <#8fb26a>donné à <#e8d5b0><player><#a89f91>."
@@ -73,11 +91,16 @@ messages:
   not-a-rod: "<#b5563f>Tenez une canne à pêche en main principale."
   converted: "<#8fb26a>Votre canne est désormais un grappin <state><#8fb26a>. <#6b6355>Ses enchantements sont conservés."
   updated: "<#8fb26a>Grappin mis à jour <#6b6355>· <state><#6b6355>. Son usure et ses enchantements sont conservés."
-  # Remplacent <state> dans les messages ci-dessus.
+  # Composent <state> dans les messages ci-dessus, separes par state-separator.
   state-repairable: "<#8fb26a>réparable"
   state-unrepairable: "<#b5563f>irréparable"
   state-unlimited: "<#d9a441>illimité"
-  state-no-cooldown: "<#d9a441>sans recharge"
+  state-durability-normale: "<#a89f91>durabilité normale"
+  state-durability-bonne: "<#d9a441>bonne durabilité"
+  state-durability-excellente: "<#d9a441>excellente durabilité"
+  state-cooldown-court: "<#d9a441>recharge courte"
+  state-cooldown-moyen: "<#a89f91>recharge moyenne"
+  state-cooldown-long: "<#a89f91>recharge longue"
   state-separator: "<#6b6355>, "
   reloaded: "<#8fb26a>Configuration rechargée."
   repair-blocked: "<#b5563f>Grappin irréparable <#6b6355>· la réparation a été annulée"

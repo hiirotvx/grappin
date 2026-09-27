@@ -13,6 +13,7 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Creation et reconnaissance des grappins.
@@ -30,19 +31,26 @@ public final class GrappinItem {
     private final NamespacedKey wearKey;
     // Choix fait a la creation : 1 = reparable, 0 = irreparable. Absent = valeur de la config.
     private final NamespacedKey repairableKey;
-    // Memes conventions : 1 = lancers illimites / sans cooldown, 0 = non, absent = config.
+    // Meme convention : 1 = lancers illimites, 0 = limites, absent = config.
     private final NamespacedKey unlimitedKey;
-    private final NamespacedKey noCooldownKey;
+    // Niveau de recharge : "court", "moyen" ou "long". Absent = niveau par defaut de la config.
+    private final NamespacedKey cooldownKey;
+    // Niveau de durabilite : "normale", "bonne" ou "excellente". Absent = niveau par defaut.
+    private final NamespacedKey durabilityKey;
+    // Option "sans cooldown" de la 1.4.0, remplacee par les niveaux : effacee a la mise a jour.
+    private final NamespacedKey obsoleteNoCooldownKey;
 
     public GrappinItem(GrappinPlugin plugin) {
         this.plugin = plugin;
         this.wearKey = new NamespacedKey(plugin, "recorded_wear");
         this.repairableKey = new NamespacedKey(plugin, "repairable");
         this.unlimitedKey = new NamespacedKey(plugin, "unlimited");
-        this.noCooldownKey = new NamespacedKey(plugin, "no_cooldown");
+        this.cooldownKey = new NamespacedKey(plugin, "cooldown");
+        this.durabilityKey = new NamespacedKey(plugin, "durability");
+        this.obsoleteNoCooldownKey = new NamespacedKey(plugin, "no_cooldown");
     }
 
-    /** @param options chaque option a true / false pour imposer le choix, null pour la valeur de la config */
+    /** @param options chaque option imposee, ou null pour la valeur de la config */
     public ItemStack create(GrappinOptions options) {
         ItemStack rod = new ItemStack(Material.FISHING_ROD);
         apply(rod, options);
@@ -53,8 +61,8 @@ public final class GrappinItem {
      * Transforme une canne existante en grappin, ou rafraichit un grappin, en conservant
      * ses enchantements et son usure.
      *
-     * @param options chaque option a true / false pour imposer le choix ; null pour garder
-     *                celui deja inscrit sur l'objet, ou a defaut la valeur de la config
+     * @param options chaque option imposee ; null pour garder celle deja inscrite sur
+     *                l'objet, ou a defaut la valeur de la config
      */
     public void apply(ItemStack rod, GrappinOptions options) {
         ItemMeta meta = rod.getItemMeta();
@@ -62,23 +70,28 @@ public final class GrappinItem {
         PersistentDataContainer data = meta.getPersistentDataContainer();
         store(data, repairableKey, options.repairable());
         store(data, unlimitedKey, options.unlimited());
-        store(data, noCooldownKey, options.noCooldown());
+        storeTier(data, cooldownKey, options.cooldown());
+        storeTier(data, durabilityKey, options.durability());
+        data.remove(obsoleteNoCooldownKey);
 
+        String durability = resolveDurability(data);
         meta.displayName(MM.deserialize(settings.itemName()));
         List<String> lore = new ArrayList<>(settings.itemLore());
         boolean unlimited = resolve(data, unlimitedKey, settings.unlimited());
-        // Un grappin illimite ne s'use pas : la mention d'usure serait fausse.
+        // Un grappin illimite ne s'use pas : les mentions d'usure et de durabilite seraient fausses.
         addLine(lore, !unlimited, settings.wearLine());
+        addLine(lore, !unlimited, settings.durabilityLines().get(durability));
         addLine(lore, !resolveRepairable(data), settings.unrepairableLine());
         addLine(lore, unlimited, settings.unlimitedLine());
-        addLine(lore, resolve(data, noCooldownKey, settings.noCooldown()), settings.noCooldownLine());
+        addLine(lore, true, settings.cooldownLines().get(resolveCooldown(data)));
         meta.lore(lore.stream().map(MM::deserialize).toList());
 
-        if (settings.maxDurability() > 0 && meta instanceof Damageable damageable) {
-            damageable.setMaxDamage(settings.maxDurability());
+        int maxDurability = settings.durabilities().get(durability);
+        if (maxDurability > 0 && meta instanceof Damageable damageable) {
+            damageable.setMaxDamage(maxDurability);
             // Une canne deja usee ne doit pas depasser la nouvelle limite et se briser d'un coup.
-            if (damageable.getDamage() >= settings.maxDurability()) {
-                damageable.setDamage(settings.maxDurability() - 1);
+            if (damageable.getDamage() >= maxDurability) {
+                damageable.setDamage(maxDurability - 1);
             }
         }
 
@@ -95,6 +108,12 @@ public final class GrappinItem {
     private static void store(PersistentDataContainer data, NamespacedKey key, Boolean value) {
         if (value != null) {
             data.set(key, PersistentDataType.BYTE, (byte) (value ? 1 : 0));
+        }
+    }
+
+    private static void storeTier(PersistentDataContainer data, NamespacedKey key, String tier) {
+        if (tier != null) {
+            data.set(key, PersistentDataType.STRING, tier);
         }
     }
 
@@ -169,9 +188,28 @@ public final class GrappinItem {
         return isGrappin(item) && resolve(item.getItemMeta().getPersistentDataContainer(), unlimitedKey, plugin.settings().unlimited());
     }
 
-    /** Un grappin sans cooldown peut etre relance sans attendre le temps de recharge. */
-    public boolean hasNoCooldown(ItemStack item) {
-        return isGrappin(item) && resolve(item.getItemMeta().getPersistentDataContainer(), noCooldownKey, plugin.settings().noCooldown());
+    /** Niveau de recharge du grappin : "court", "moyen" ou "long". */
+    public String cooldown(ItemStack item) {
+        return isGrappin(item) ? resolveCooldown(item.getItemMeta().getPersistentDataContainer()) : plugin.settings().defaultCooldown();
+    }
+
+    /** Niveau de durabilite du grappin : "normale", "bonne" ou "excellente". */
+    public String durability(ItemStack item) {
+        return isGrappin(item) ? resolveDurability(item.getItemMeta().getPersistentDataContainer()) : plugin.settings().defaultDurability();
+    }
+
+    private String resolveCooldown(PersistentDataContainer data) {
+        return resolveTier(data, cooldownKey, plugin.settings().cooldowns(), plugin.settings().defaultCooldown());
+    }
+
+    private String resolveDurability(PersistentDataContainer data) {
+        return resolveTier(data, durabilityKey, plugin.settings().durabilities(), plugin.settings().defaultDurability());
+    }
+
+    /** Niveau inscrit sur le grappin ; a defaut, ou s'il est inconnu, celui de la config. */
+    private static String resolveTier(PersistentDataContainer data, NamespacedKey key, Map<String, ?> tiers, String fallback) {
+        String tier = data.get(key, PersistentDataType.STRING);
+        return tier != null && tiers.containsKey(tier) ? tier : fallback;
     }
 
     private boolean resolveRepairable(PersistentDataContainer data) {

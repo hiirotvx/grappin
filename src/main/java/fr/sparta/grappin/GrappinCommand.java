@@ -50,7 +50,7 @@ public final class GrappinCommand implements TabExecutor {
     }
 
     /**
-     * /grappin give [joueur] [reparable|irreparable] [illimite|limite] [sans-cooldown|cooldown]
+     * /grappin give [joueur] [reparable|irreparable] [illimite|limite] [court|moyen|long] [normale|bonne|excellente]
      * Tous les arguments sont facultatifs et peuvent etre donnes dans n'importe quel ordre.
      */
     private void give(CommandSender sender, String[] args) {
@@ -126,18 +126,19 @@ public final class GrappinCommand implements TabExecutor {
         plugin.send(player, update ? "updated" : "converted", state(held));
     }
 
-    /** Resume des options du grappin pour <state> : "irreparable, illimite, sans recharge". */
+    /** Resume des options du grappin pour <state> : "irreparable, bonne durabilite, recharge courte". */
     private TagResolver state(ItemStack grappin) {
         Settings settings = plugin.settings();
         GrappinItem items = plugin.items();
         List<String> parts = new ArrayList<>();
         parts.add(settings.message(items.isRepairable(grappin) ? "state-repairable" : "state-unrepairable"));
+        // Un grappin illimite ne s'use pas : son niveau de durabilite n'a pas d'interet.
         if (items.isUnlimited(grappin)) {
             parts.add(settings.message("state-unlimited"));
+        } else {
+            parts.add(settings.message("state-durability-" + items.durability(grappin)));
         }
-        if (items.hasNoCooldown(grappin)) {
-            parts.add(settings.message("state-no-cooldown"));
-        }
+        parts.add(settings.message("state-cooldown-" + items.cooldown(grappin)));
         return Placeholder.parsed("state", String.join(settings.message("state-separator"), parts));
     }
 

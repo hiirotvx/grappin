@@ -15,10 +15,13 @@ Options, combinables dans n'importe quel ordre :
 | Option | Effet |
 |---|---|
 | `reparable` / `irreparable` | peut, ou non, etre repare (Raccommodage, enclume, meule, etabli, /repair) |
+| `normale` / `bonne` / `excellente` | durabilite maximale (64 / 128 / 256 par defaut) |
+| `court` / `moyen` / `long` | temps de recharge (1 / 2 / 4 s par defaut) |
 | `illimite` / `limite` | ne perd aucune durabilite en s'accrochant |
-| `sans-cooldown` / `cooldown` | se relance sans temps de recharge |
 
-Exemple : `/grappin give Steve irreparable illimite sans-cooldown`
+Les valeurs de chaque niveau se reglent dans `config.yml` (`grappin.durabilities`, `grappin.cooldowns`).
+
+Exemple : `/grappin give Steve irreparable bonne court`
 
 Une option non precisee prend la valeur par defaut de `config.yml` (au give) ou garde celle du grappin (au set).
 

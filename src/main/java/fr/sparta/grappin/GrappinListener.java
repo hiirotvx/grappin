@@ -94,8 +94,9 @@ public final class GrappinListener implements Listener {
         if (last != null && now - last < DOUBLE_EVENT_MILLIS) {
             return;
         }
-        if (!player.hasPermission("grappin.bypass.cooldown") && !plugin.items().hasNoCooldown(item)) {
-            long cooldownMillis = (long) (settings.cooldownSeconds() * 1000);
+        if (!player.hasPermission("grappin.bypass.cooldown")) {
+            // Chaque grappin porte son niveau de recharge (court / moyen / long).
+            long cooldownMillis = settings.cooldownMillis(plugin.items().cooldown(item));
             if (last != null && now - last < cooldownMillis) {
                 double left = (cooldownMillis - (now - last)) / 1000.0;
                 plugin.actionBar(player, "cooldown",
