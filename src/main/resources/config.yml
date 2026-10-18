@@ -80,6 +80,8 @@ item:
   # false = les joueurs ne peuvent pas enchanter un grappin : table d'enchantement
   # bloquee, et a l'enclume seul le renommage reste possible (pas de livre enchante).
   # Empeche notamment Solidite d'allonger la durabilite choisie.
+  # Les grappins deja enchantes perdent leurs enchantements (verifie toutes les 2 secondes),
+  # y compris ceux poses par un admin.
   enchantable: false
 
 messages:
@@ -94,8 +96,8 @@ messages:
   given: "<#8fb26a>Grappin <state> <#8fb26a>donné à <#e8d5b0><player><#a89f91>."
   received: "<#8fb26a>Vous avez reçu un grappin <state><#8fb26a>."
   not-a-rod: "<#b5563f>Tenez une canne à pêche en main principale."
-  converted: "<#8fb26a>Votre canne est désormais un grappin <state><#8fb26a>. <#6b6355>Ses enchantements sont conservés."
-  updated: "<#8fb26a>Grappin mis à jour <#6b6355>· <state><#6b6355>. Son usure et ses enchantements sont conservés."
+  converted: "<#8fb26a>Votre canne est désormais un grappin <state><#8fb26a>."
+  updated: "<#8fb26a>Grappin mis à jour <#6b6355>· <state><#6b6355>. Son usure est conservée."
   # Composent <state> dans les messages ci-dessus, separes par state-separator.
   state-repairable: "<#8fb26a>réparable"
   state-unrepairable: "<#b5563f>irréparable"
@@ -110,3 +112,4 @@ messages:
   reloaded: "<#8fb26a>Configuration rechargée."
   repair-blocked: "<#b5563f>Grappin irréparable <#6b6355>· la réparation a été annulée"
   enchant-blocked: "<#b5563f>Un grappin ne peut pas être enchanté"
+  enchant-removed: "<#b5563f>Les enchantements de votre grappin ont été retirés"

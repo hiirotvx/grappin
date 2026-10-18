@@ -108,6 +108,11 @@ public final class GrappinListener implements Listener {
         // Avant tout tir : une durabilite regagnee illegitimement est annulee ici,
         // pour que le joueur n'en tire jamais le moindre grappin supplementaire.
         ItemStack held = player.getInventory().getItem(hand);
+        // Idem pour un enchantement interdit (Solidite) : retire avant que le tir n'en profite.
+        if (plugin.items().stripEnchantments(held)) {
+            player.getInventory().setItem(hand, held);
+            plugin.actionBar(player, "enchant-removed");
+        }
         if (plugin.items().enforceWear(held)) {
             player.getInventory().setItem(hand, held);
             plugin.actionBar(player, "repair-blocked");

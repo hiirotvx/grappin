@@ -14,7 +14,7 @@ import org.bukkit.inventory.ItemStack;
  *
  * Solidite allongerait la duree de vie au-dela du niveau de durabilite choisi,
  * et les autres enchantements n'ont pas d'usage sur un grappin.
- * Les enchantements poses par un admin (canne convertie avec /grappin set) sont conserves.
+ * Les grappins enchantes avant l'interdiction sont nettoyes par GrappinItem#stripEnchantments.
  */
 public final class EnchantGuard implements Listener {
 

@@ -159,21 +159,45 @@ public final class GrappinItem {
         return false;
     }
 
-    /** Applique enforceWear a tout l'inventaire du joueur. @return true si une reparation a ete annulee */
+    /**
+     * Retire les enchantements d'un grappin quand ils sont interdits (item.enchantable: false),
+     * pour ceux enchantes avant l'interdiction. Modifie l'objet sur place.
+     *
+     * @return true si des enchantements ont ete retires
+     */
+    public boolean stripEnchantments(ItemStack item) {
+        if (plugin.settings().enchantable() || !isGrappin(item) || item.getEnchantments().isEmpty()) {
+            return false;
+        }
+        item.getEnchantments().keySet().forEach(item::removeEnchantment);
+        return true;
+    }
+
+    /**
+     * Applique enforceWear et stripEnchantments a tout l'inventaire du joueur, et le previent
+     * si des enchantements ont ete retires.
+     *
+     * @return true si une reparation a ete annulee
+     */
     public boolean enforceInventory(Player player) {
         PlayerInventory inventory = player.getInventory();
         ItemStack[] contents = inventory.getContents();
         boolean reverted = false;
+        boolean stripped = false;
         for (int slot = 0; slot < contents.length; slot++) {
             ItemStack item = contents[slot];
             if (item == null || item.getType() != Material.FISHING_ROD) {
                 continue;
             }
             ItemStack before = item.clone();
+            stripped |= stripEnchantments(item);
             reverted |= enforceWear(item);
             if (!item.equals(before)) {
                 inventory.setItem(slot, item);
             }
+        }
+        if (stripped) {
+            plugin.actionBar(player, "enchant-removed");
         }
         return reverted;
     }
