@@ -44,7 +44,7 @@ public final class RepairGuard implements Listener {
 
     /**
      * Enclume : seul un resultat moins use que le grappin d'origine est refuse.
-     * Renommer ou ajouter un enchantement reste donc possible.
+     * Renommer reste donc possible (les enchantements sont geres par EnchantGuard).
      */
     @EventHandler(priority = EventPriority.HIGH)
     public void onAnvil(PrepareAnvilEvent event) {

@@ -30,6 +30,7 @@ public record Settings(
         Map<String, String> cooldownLines,
         String defaultDurability,
         Map<String, String> durabilityLines,
+        boolean enchantable,
         Map<String, String> messages
 ) {
 
@@ -96,6 +97,7 @@ public record Settings(
                         "bonne", config.getString("item.durability-lines.bonne", "<!italic><#d9a441>✦ <#a89f91>Bonne durabilité"),
                         "excellente", config.getString("item.durability-lines.excellente", "<!italic><#d9a441>✦ <#a89f91>Excellente durabilité")
                 ),
+                config.getBoolean("item.enchantable", false),
                 Map.copyOf(messages)
         );
     }

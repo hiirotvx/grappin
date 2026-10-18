@@ -77,6 +77,11 @@ item:
   unlimited: false
   unlimited-line: "<!italic><#d9a441>✦ <#a89f91>Lancers illimités"
 
+  # false = les joueurs ne peuvent pas enchanter un grappin : table d'enchantement
+  # bloquee, et a l'enclume seul le renommage reste possible (pas de livre enchante).
+  # Empeche notamment Solidite d'allonger la durabilite choisie.
+  enchantable: false
+
 messages:
   prefix: "<gradient:#8c6239:#d9a441><b>Grappin</b></gradient> <#5a4a38>┃ "
   cooldown: "<#b5563f>Grappin en recharge <#6b6355>· <#e8d5b0><time> s"
@@ -104,3 +109,4 @@ messages:
   state-separator: "<#6b6355>, "
   reloaded: "<#8fb26a>Configuration rechargée."
   repair-blocked: "<#b5563f>Grappin irréparable <#6b6355>· la réparation a été annulée"
+  enchant-blocked: "<#b5563f>Un grappin ne peut pas être enchanté"

@@ -26,6 +26,7 @@ public final class GrappinPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new GrappinListener(this), this);
         getServer().getPluginManager().registerEvents(new RepairGuard(this), this);
+        getServer().getPluginManager().registerEvents(new EnchantGuard(this), this);
 
         // Filet de securite contre les reparations qui ne declenchent aucun evenement
         // (commandes /repair d'EssentialsX, CMI...) : toutes les 2 secondes, les grappins
